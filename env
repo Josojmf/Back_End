@@ -1,0 +1,5 @@
+PORT = 3000
+MONGO_DATABASE = MyDbBackEnd
+TOKEN = 99852d57-2868-4411-b682-ce7b90446dd3
+AUTHOR = null
+DB_URL = mongodb+srv://joso:12345abc@cluster0.6xzff.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
