@@ -1,0 +1,57 @@
+# import Date, ObjectID, EmailAddress, JSON from "./scalars.graphql"
+# import Document from "./document.graphql"
+# import Folder from "./folder.graphql"
+
+directive @authRequired(
+  requires: [Role] = [ADMIN],
+) on QUERY | FIELD
+
+enum Role {
+  ADMIN
+  USER
+  EPHEMERAL
+}
+
+type Query {
+  users: [User]   @authRequired(requires: [ADMIN])
+  me: User        @authRequired(requires: [USER])
+}
+type Mutation {
+  signUpUser(input: UserIn!): String
+  activateAccount(token: String): String
+  login(email: EmailAddress!, password: String!): String
+  resetPasswordEmail(email: EmailAddress!): String
+  updatePassword(token: String, newPassword: String): String
+  deleteUser(id: ObjectID!): User                           @authRequired(requires: [USER])
+  updateUser(id: ObjectID!, input: UserIn!): User           @authRequired(requires: [USER])
+}
+
+type User {
+  id: ObjectID
+  email: EmailAddress
+  password: String
+  name: String
+  center: String
+  active: Boolean
+  signUpToken: String
+  authToken: String
+  notifications: Boolean
+  createdAt: Date
+  updatedAt: Date
+  signUpSurvey: JSON
+  rootFolder: ObjectID
+  documents: [Document]
+  folders: [Folder]
+}
+
+input UserIn {
+  email: EmailAddress
+  password: String
+  name: String
+  center: String
+  active: Boolean
+  signUpToken: String
+  authToken: String
+  notifications: Boolean
+  signUpSurvey: JSON
+}

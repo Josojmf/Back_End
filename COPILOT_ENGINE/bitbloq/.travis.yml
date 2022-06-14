@@ -1,0 +1,31 @@
+sudo: false
+language: node_js
+node_js:
+  - '10'
+branches:
+  only:
+    - develop
+    - master
+cache:
+  directories:
+    - node_modules
+    - packages/lib3d/node_modules
+    - packages/3d/node_modules
+    - packages/ui/node_modules
+    - packages/bloqs/node_modules
+    - packages/junior/node_modules
+    - packages/hardware-designer/node_modules
+before_install:
+  - npm update
+  - npm install -g lerna
+  - npm install -g jest
+install:
+  - npm install
+  - npx lerna bootstrap
+script:
+  - npm run tslint:prod
+  - npm run test
+after_success:
+  - npm run coveralls
+notifications:
+    slack: bitbloq-developers:pFZJaDJIDsKSGqn4O0vJonrS
