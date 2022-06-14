@@ -14,11 +14,17 @@ export async function  getRecipes(parent: any, args: { author: string, ingredien
         if (recipes_author.length != 0) {
             return recipes_author.map(r => ({
                 ...r,
+                ingredients: r.ingredients.map(async function(i:any){
+                  return await context.client.collection("Ingredients").findOne({ name:i})
+                }),
                 id: r._id.toString(),
                 author: {
                     ...author_complete,
                     recipes: recipes_author.map(r=> ({
                         ...r,
+                        ingredients: r.ingredients.map(async function(i:any){
+                          return await context.client.collection("Ingredients").findOne({ name:i})
+                        })
                     }))
                 }
             }))
@@ -45,6 +51,9 @@ export async function  getRecipes(parent: any, args: { author: string, ingredien
 
          return recipes_ingredient.map(async r => ({
                 ...r,
+                ingredients: r.ingredients.map(async function(i:any){
+                  return await context.client.collection("Ingredients").findOne({ name:i})
+                }),
                 id: r._id.toString(),
                 author: await context.client.collection("Users").findOne({_id:new ObjectId(r.author)})
                 
@@ -63,6 +72,9 @@ export async function  getRecipes(parent: any, args: { author: string, ingredien
       if (recetas_db.length != 0) {
         return recetas_db.map(r => ({
           ...r,
+          ingredients: r.ingredients.map(async function(i:any){
+            return await context.client.collection("Ingredients").findOne({ name:i})
+          }),
           id: r._id.toString()
         }))
       }
@@ -74,6 +86,9 @@ export async function  getRecipes(parent: any, args: { author: string, ingredien
       const recetas = await context.client.collection("Recipes").find().toArray();
       return recetas.map(r => ({
         ...r,
+        ingredients: r.ingredients.map(async function(i:any){
+          return await context.client.collection("Ingredients").findOne({ name:i})
+        }),
         id: r._id.toString()
       }))
     }
@@ -85,6 +100,9 @@ export async function getRecipe(parent: any, args: { id: string }, context: { cl
     if(recipe) {
       return {
         ...recipe,
+        ingredients: recipe.ingredients.map(async function(i:any){
+          return await context.client.collection("Ingredients").findOne({ name:i})
+        }),
         id: args.id
       }
     }
@@ -96,50 +114,77 @@ export async function getRecipe(parent: any, args: { id: string }, context: { cl
 
 export async function getUser(parent: any, args: {id:string},context :{client: Db}){
 
-    return context.client.collection("User").findOne({"id":args.id})
+    const user_search= await context.client.collection("Users").findOne({_id:new ObjectId(args.id)})
+    if(user_search){
+    const recipes= await context.client.collection("Recipes").find({ author: args.id }).toArray();
+    
+    return{
+      ...user_search,
+      recipes: recipes.map(r => ({
+        ...r,
+        ingredients: r.ingredients.map(async function(i:any){
+          return await context.client.collection("Ingredients").findOne({ name:i})
+        })
+      }))
+    } as unknown as Usuario
+}
 }
 
-export const User = {
-    recipes: async (parent: { id: string }, args: any, context: { client: Db }) => {
-      const recetas = await context.client.collection("Recipes").find({ author: parent.id }).toArray();
-      return recetas;
-    }
-  }
-  
-  export const Recipe = {
-    ingredients: async (parent: { id: string, ingredients: string[] }, args: any, context: { client: Db }) => {
-      const ingredientes = await context.client.collection("Ingredients").find({ _id: { $in: parent.ingredients.map(i => new ObjectId(i)) } }).toArray();
-      return ingredientes.map(r => ({
+export async function getUsers(parent: any, args: {id:string},context :{client: Db}){
+  const user_search= await context.client.collection("Users").find().toArray();
+  if(user_search.length > 0){   
+  return user_search.map(async u=>({
+      ...u,
+      id: u._id.toString(),
+      recipes:  (await context.client.collection("Recipes").find({author:u._id.toString()}).toArray()).map(async r => ({
         ...r,
-        id: r._id.toString()
+        ingredients: r.ingredients.map(async function(i:any){
+          return await context.client.collection("Ingredients").findOne({ name:i})
+          
+        })
       }))
-    },
-    author: async (parent: { author: string }, args: any, context: { client: Db }) => {
-      const user = await context.client.collection("Users").findOne({ _id: new ObjectId(parent.author) }) as unknown as Usuario
-      return {
-        ...user,
-        id: user._id
-      };
-    }
+    }))
+    
+  } 
+}
+export const User = {
+  recipes: async (parent: { id: string }, args: any, context: { client: Db }) => {
+    const recetas = await context.client.collection("Recipes").find({ author: parent.id }).toArray();
+    return recetas;
   }
-  
-  export const Ingredient = {
-    recipes: async (parent: { id: string }, args: any, context: { client: Db }) => {
-      const recetas = await context.client.collection("Recipes").find({ ingredients: parent.id }).toArray();
-      return recetas.map(r => ({
-        ...r,
-        id: r._id.toString()
-      }));
-    }
+}
+
+export const Recipe = {
+  ingredients: async (parent: { id: string, ingredients: string[] }, args: any, context: { client: Db }) => {
+    const ingredientes = await context.client.collection("Ingredients").find({ _id: { $in: parent.ingredients.map(i => new ObjectId(i)) } }).toArray();
+    return ingredientes.map(r => ({
+      ...r,
+      id: r._id.toString()
+    }))
+  },
+  author: async (parent: { author: string }, args: any, context: { client: Db }) => {
+    const user = await context.client.collection("Users").findOne({ _id: new ObjectId(parent.author) }) as unknown as Usuario
+    return {
+      ...user,
+      id: user._id
+    };
   }
+}
 
-
-
-
+export const Ingredient = {
+  recipes: async (parent: { id: string }, args: any, context: { client: Db }) => {
+    const recetas = await context.client.collection("Recipes").find({ ingredients: parent.id }).toArray();
+    return recetas.map(r => ({
+      ...r,
+      id: r._id.toString()
+    }));
+  }
+}
 
 
 module.exports = {
     getRecipes,
     getRecipe,
-    getUser
+    getUser,
+    getUsers
 }

@@ -2,14 +2,17 @@ import { isNamedExportBindings } from "typescript";
 import { connectDB } from "./DBConnect"
 import  { ApolloServer } from 'apollo-server';
 import { Collection, Db, MongoClient } from "mongodb";
+import {Usuario} from "./types"; 
 import { v4 as uuid } from "uuid";
-const dotenv = require('dotenv');
-import {Usuario} from "./types";
-
 import { typeDefs } from "./schema"
+const dotenv = require('dotenv');
 dotenv.config();
 const  Mutation  =require ("./Mutation");
-const Query =require("./Query")
+const  Query  =require ("./Query");
+const Recipe = require("./Chained/Recipe")
+const User = require("./Chained/User")
+const Ingredient = require("./Chained/Ingredient")
+
 
 const resolvers = {
   Query,
@@ -25,7 +28,7 @@ const run = async () => {
     context: async ({ req, res }) => {
       if (validQuery.some((q) => req.body.query.includes(q))) {
         if (req.headers.token != null) {
-          const user = await client.collection("ActiveUsers").findOne({ token: req.headers.token });
+          const user = await client.collection("Users").findOne({ token: req.headers['token'] }) as unknown as  Usuario;
           if (user) {
             return {
               client,

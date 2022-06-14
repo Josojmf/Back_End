@@ -15,5 +15,5 @@ export type Receta = {
     name: string,
     description: string,
     ingredients: string[],
-    authors: Usuario[],
+    author: string,
 }

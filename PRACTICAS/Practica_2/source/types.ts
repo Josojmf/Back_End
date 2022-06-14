@@ -3,7 +3,7 @@ export type CharacterAPI = {
     name: string;
     status: string;
     species: string;
-    episode: [string];
+    episode: Array<Episode>;
   };
   
   export type EpisodeAPI = {

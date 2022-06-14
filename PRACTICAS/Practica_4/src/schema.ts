@@ -1,25 +1,23 @@
 import gql from 'graphql-tag';
 
 export const typeDefs = gql`
-type User{
-  id: String!
-  mail: String!
-  pwd: String!
-  token: String
-  recipes: [Recipe!]!
-}
-
 type Ingredient{
   id: ID!
   name: String!
   recipes: [Recipe!]!
 }
 type Recipe{
-  id: ID
+  id: ID!
   name: String!
   description: String!
   ingredients: [Ingredient!]!
   author: User!
+} 
+type User{
+  id: ID!
+  mail: String!
+  token: String
+  recipes: [Recipe!]!
 }
 
 type Query {

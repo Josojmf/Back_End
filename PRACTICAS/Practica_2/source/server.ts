@@ -1,9 +1,10 @@
 import http from 'http';
 import express, { Express } from 'express';
 import morgan from 'morgan';
-import routes from './routes/posts';
+import  routes  from './routes/posts';
 const router: Express = express();
-
+import dotenv from 'dotenv'
+dotenv.config();
 /** Logging */
 router.use(morgan('dev'));
 /** Parse the request */
@@ -27,6 +28,10 @@ router.use((req, res, next) => {
 
 /** Routes */
 router.use('/', routes);
+const bodyParser = require('body-parser');
+router.use(bodyParser.json());
+router.use(bodyParser.text());
+router.use(bodyParser.urlencoded({ extended: true }))
 
 
  /*Error handling */
@@ -39,7 +44,7 @@ router.use((req, res, next) => {
 
 /** Server */
 const httpServer = http.createServer(router);
-const PORT: any = process.env.PORT ?? 8000;
+const PORT: any = process.env.PORT;
 httpServer.listen(PORT, () => console.log(`The server is running on port ${PORT}`));
 
 
