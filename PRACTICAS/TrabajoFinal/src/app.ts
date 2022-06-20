@@ -1,109 +1,106 @@
-import { ApolloError,  gql } from "apollo-server";
-import { execute, subscribe, SubscriptionArgs } from 'graphql';
-import { ApolloServer } from "apollo-server-express";
-import { SubscriptionServer } from 'subscriptions-transport-ws';
-import { v4 as uuidv4 } from "uuid";
-import { connectDB } from "./mongo";
-import { typeDefs } from "./schema";
-import { Mutation} from "./resolvers/mutations";
-import { Subscription} from "./resolvers/subscription";
-import { Db } from "mongodb";
-import { makeExecutableSchema } from '@graphql-tools/schema';
-import { createServer } from 'http';
-import * as dotenv from "dotenv";
+import { connectDB } from "./mongo"
+import { createServer } from "http";
+import { execute, subscribe } from "graphql";
+import { SubscriptionServer } from "subscriptions-transport-ws";
+import { makeExecutableSchema } from "@graphql-tools/schema";
 import express from "express";
-import { PubSub } from 'graphql-subscriptions';
-import { Query } from "./resolvers/query";
-import {GraphQLServer} from "graphql-yoga"
-const pubsub = new PubSub();
-let activeChats= new Map<string,number>();
-
+import { ApolloServer,ApolloError } from "apollo-server-express";
+import { typeDefs } from "./schema"
+import { Query } from "./resolvers/query"
+import { Mutation } from "./resolvers/mutations"
+import { Subscription } from "./resolvers/subscription"
+export const userChat=[];
+const resolvers = {
+  Query,
+  Mutation,
+  Subscription
+  };
 
 const run = async () => {
+  const schema = makeExecutableSchema({ typeDefs, resolvers });
+  const app = express();
+  const httpServer = createServer(app);
+  const client = await connectDB()
+  const validQuery = ["SignOut", "LogOut", "Quit", "SendMessage", "getChats"]
   
-    console.log("Connecting to DB...");
-    const db:Db = await connectDB();
-    console.log("Connected to database");
-    const users =await db.collection("Users");
-    const chats =await db.collection("Chats");
-    dotenv.config();
-    const resolvers = {
-      Mutation,
-      Query,
-      Subscription :{
-        postCreated: {
-          subscribe:async (parent:any,args:any, context:{chat:string,pubsub:PubSub,token:string})=>{ 
-            if(Auth(args.token,process.env.TOKEN as string)==false){
-              throw new ApolloError('Not Logged In', 'MY_ERROR_CODE');
-          }
-            if(activeChats.has(args.chat)==false){
-              activeChats.set(args.chat,1);
-            }else{
-              let nUsers=activeChats.get(args.chat);
-              activeChats.set(args.chat,nUsers!+1)
-            }
-            users.updateOne({token:args.token}, {$set:{chat:args.chat}})
-            return pubsub.asyncIterator(args.chat)
-          } 
-        },
-      },
+
+  const subscriptionServer = SubscriptionServer.create({
+    schema,
+    execute,
+    subscribe,
+     async onConnect(connectionParams:any, webSocket:any, context:any) {
+      const user = await client.collection("Users").findOne({token:connectionParams.token})
+      const chat =await client.collection("Chats").findOne({token:connectionParams.chat})
+      if(user){
+        await client.collection("Users").updateOne({token:connectionParams.token},{$set:{chat:connectionParams.chat}})
+        if(chat){  
+          await client.collection("Chats").updateOne({name:connectionParams.chat},{$push:{users:user.email}})
+      }else{
+        await client.collection("Chats").insertOne({name:connectionParams.chat,users:[user.email]})
     }
-    const schema = makeExecutableSchema({ typeDefs, resolvers });
-    const app = express();
-    const httpServer = createServer(app);
-   const subscriptionServer = SubscriptionServer.create({
-      schema,
-      execute,
-      subscribe,
-      onConnect(connectionParams:any, webSocket:any, context:({chats:string})) {
-      },
-   }, {
-      server: httpServer,
-      path: '/graphql',
-   });
-    const server = new ApolloServer({
-        schema,
-        context: async ({ req, res }) => {// como app. use??? recibe el request , donde me llegan los headers y todo lo que pase
-            pubsub;
-            return{
-                token:req.headers.token,
-                usersDb:users,
-                chats:req.headers.chats,
-                pubsub:pubsub,
-                subscriptionServer:subscriptionServer,
-                activeChats:activeChats
-               } 
-            
-        },
-        plugins: [{
-            async serverWillStart() {
-              return {
-                async drainServer() {
-                  subscriptionServer.close();
-                }
-              };
+        
+      }
+    },
+ }, {
+    server: httpServer,
+    path: '/graphql',
+ }
+  );
+  const server = new ApolloServer({
+    schema,
+    context: async ({ req, res }) => {
+      if (validQuery.some((q) => req.body.query.includes(q))) {
+        if (req.headers['token'] != null) {
+          const user = await client.collection("Users").findOne({ token: req.headers['token'] })
+          if (user) {
+            const token = user['token'];
+            const username = user['email']
+            const chat = user['chat']
+            return {
+              client,
+              user,
+              token,
+              username,
+              chat,
             }
-          }],
-    });
-    
-    await server.start();
+          }
+          else  throw new ApolloError("Something went wrong", "Bad Input", { status: 400 });
+        }
+        else throw new ApolloError("Something went wrong", "Bad Input", { status: 400 });
+      }
+      else {
+        return {
+          client,
+          //chats,
+        }
+      }
+    },
+
+    plugins: [{
+      async serverWillStart() {
+        return {
+          async drainServer() {
+            subscriptionServer.close();
+          }
+        };
+      }
+    }],
+  });
+  await server.start();
   server.applyMiddleware({ app });
-  httpServer.listen(process.env.PORT, () =>
-  console.log(`Server is now running on http://localhost:${process.env.PORT}/graphql`)
-);
-  
-}
 
+  const PORT = process.env.PORT;
+  httpServer.listen(PORT, () => {
+    console.log(
+      `🚀 Query endpoint ready at http://localhost:${PORT}${server.graphqlPath}`
+    );
+    console.log(
+      `🚀 Subscription endpoint ready at ws://localhost:${PORT}${server.graphqlPath}`
+    );
+  });
+}
 try {
-    run();
+  run()
 } catch (e) {
-    console.log(e);
-}
-
-const Auth = (contra: string, token: string) => {
-  if(contra === token) {
-      return true;
-  }else{
-      return false;
-  }
+  console.error(e);
 }
