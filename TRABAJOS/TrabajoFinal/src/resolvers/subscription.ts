@@ -1,18 +1,24 @@
-import { ApolloError } from 'apollo-server-errors';
-import { Collection, Db, ObjectId } from "mongodb";
-import { User } from "../types";
-import { v4 as uuidv4 } from "uuid";
+
+import { MongoClient } from "mongodb";
 const brcypt = require("bcrypt");
 import * as dotenv from "dotenv";
-import { PubSub } from 'graphql-subscriptions';
-import { subscribe } from 'graphql';
-import { SubscriptionServer } from 'subscriptions-transport-ws';
+import { pubSub } from '../pubSub';
+
+
 
 dotenv.config();
-export const Subscription ={
-    postCreated:async(context: {pubsub:PubSub,chat:string}) => {
-        return context.pubsub.asyncIterator([context.chat])
+const mongouri: string = "mongodb+srv://joso:123456j@cluster0.6xzff.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const clientM = new MongoClient(mongouri);
+const client =clientM.db("Chat");
+export const Subscription = {
+    Join: {
+        subscribe: async (parent:any,args:{sala:string},context:any) => pubSub.asyncIterator([args.sala]),
+             resolve: async (payload:any) => {
+                   return payload.postCreated;
+             },
     }
-           
+}
 
-    }
+
+
+

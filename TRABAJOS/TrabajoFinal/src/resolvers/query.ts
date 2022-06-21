@@ -1,27 +1,17 @@
-import { ApolloError } from "apollo-server";
-import { Collection } from "mongodb";
 
+import {  Db } from "mongodb";
 
 export const Query = {
-    getChats:(parent:any,args:any,context:{token:string,activeChats:Map<string,number>})=>{
-        if(Auth(context.token,process.env.TOKEN as string)==false){
-          throw new ApolloError('Not Logged IN', 'MY_ERROR_CODE');
-      }
-        if(context.activeChats.size==0){
-          throw new ApolloError("No hay Chats Activos","EMPTY_CHATS");
-        }else
-        return context.activeChats.keys();
+    getChats:async (parent: any, args:any , context: { client: Db })=>{
+          const chats = await context.client.collection("Chats").find({}).toArray()
+          if(chats){ 
 
-    }
-
-
-
+          return chats.map(ch =>({ 
+            name:ch.name,
+            users:ch.users.map(async function(us:any){
+              return await context.client.collection("Users").findOne({email:us})
+            }),
+          }) )
+  }}
+         
 }
-
-const Auth = (contra: string, token: string) => {
-    if(contra === token) {
-        return true;
-    }else{
-        return false;
-    }
-  }
