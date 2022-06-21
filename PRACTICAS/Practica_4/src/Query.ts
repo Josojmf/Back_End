@@ -4,7 +4,6 @@ import { idText } from "typescript";
 import { v4 as uuid } from "uuid";
 import{typeDefs} from "./schema"
 import { Receta, Usuario } from "./types";
-
 export async function  getRecipes(parent: any, args: { author: string, ingredient: string }, context: { client: Db })  {
     if (args.author != null) {
       const recipes_author = await context.client.collection("Recipes").find({ author: args.author }).toArray();
