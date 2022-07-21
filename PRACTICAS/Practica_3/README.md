@@ -1,8 +1,13 @@
-API REST FUNCIONAMIENTO
+# Practica 3
 
-Se han empleado tres colecciones dentro de una misma base de datos en MongoDB, una para almacenar los sitios (Seats),
-otra para almacenar toos los usuarios creados(Users), y una ultima que se encarga de guardar los tokens de los usuarios 
-activos en cada momento(ActiveTokens)
+Se desea realizar una API para la reserva de puestos de trabajo en un espacio de
+coworking. El espacio de coworking tiene 20 puestos, numerados del 1 al 20. Los puestos
+sólo se pueden reservar por usuarios registrados en la aplicación
+La información de las reservas se debe almacenar en una base de datos MongoDB alojada
+en Mongo Atlas.
+El alumno es libre de organizar los datos en la DDBB como considere oportuno
+Los endpoints que debe ofrecer la API son los siguientes:
+
 
 Endpoints:
 
