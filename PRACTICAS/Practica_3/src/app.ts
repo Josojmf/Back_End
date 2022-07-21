@@ -7,18 +7,19 @@ import dotenv from "dotenv";
 
 
 const run = async () => {
-  const db: Db = await connectDB();
-  dotenv.config()
-  const app = express();
-  app.set("db", db);
+  const db: Db = await connectDB(); //Connect only once to de DB
+  dotenv.config() // Config the env variables
+  const app = express(); //Express router
+  app.set("db", db); // Set db as env variable
 
   app.use((req, res, next) => {
     next();
   });
-  const bodyParser = require('body-parser');
+  const bodyParser = require('body-parser'); //Body parser to get data from request body
   app.use(bodyParser.json());
   app.use(bodyParser.text());
   app.use(bodyParser.urlencoded({ extended: true }))
+  //Routes
   app.get("/status", status);
   app.get("/freeSeats", freeSeats);
   app.post("/book", book);
