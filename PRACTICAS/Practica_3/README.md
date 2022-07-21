@@ -9,7 +9,7 @@ El alumno es libre de organizar los datos en la DDBB como considere oportuno
 Los endpoints que debe ofrecer la API son los siguientes:
 
 
-Endpoints:
+## Endpoints:
 
 GET /status
 Indica que el servidor está OK y listo para recibir peticiones.
@@ -103,3 +103,7 @@ petición)
 Si no había ningún sitio reservado en el futuro con mi usuario
 Response
 Status: 404
+
+## Run:  
+npm install  
+npm run dev  
