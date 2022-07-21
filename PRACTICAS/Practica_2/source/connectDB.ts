@@ -4,11 +4,12 @@ import dotenv from "dotenv";
 dotenv.config()
 
 export const connectDB = async (): Promise<Db> => {
-
+  //Params from .env file
   const dbName = process.env.DB_NAME;
   const usr = process.env.DB_USR;
   const pwd = process.env.DB_PWD
   const cluster = process.env.DB_CLUSTER
+  //Creating mongo client
   const mongouri: string = `mongodb+srv://${usr}:${pwd}${cluster}/myFirstDatabase?retryWrites=true&w=majority`;
   const client = new MongoClient(mongouri);
 

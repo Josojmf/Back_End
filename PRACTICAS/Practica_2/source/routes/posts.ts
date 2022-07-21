@@ -1,8 +1,7 @@
 import express from 'express';
 import controller from '../controllers/posts';
-
+//Exports for express router
 const router = express.Router();
-
 router.get('/status', controller.getStatus);
 router.get('/characters', controller.getPosts);
 router.get('/character/:id', controller.getPost);

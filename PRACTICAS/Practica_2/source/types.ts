@@ -1,3 +1,5 @@
+//This are the types you are recieving FROM THE EXTERNAL API
+
 export type CharacterAPI = {
     id: string;
     name: string;

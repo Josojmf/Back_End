@@ -7,5 +7,4 @@ const CharacterSchema: Schema = new Schema({
     collection: 'RM'
 });
 
-
 export default mongoose.model('Character', CharacterSchema);

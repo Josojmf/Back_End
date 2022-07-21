@@ -1,3 +1,5 @@
+//This file fetches the characters from the web API and uploads them to the database.
+
 /*import axios from "axios";
 import { Character, Episode, EpisodeAPI, CharacterAPI } from "./types";
 
